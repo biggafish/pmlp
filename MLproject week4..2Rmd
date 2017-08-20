@@ -1,0 +1,118 @@
+---
+<center> <h1> </h1>
+<h1>Analysis of Auto transmisson effect on average MPG<h1>
+
+<h2><I> by Tim Jones</I><h2>
+
+<h4> 26th June 2017</h4>
+<br></center>
+---
+
+
+---
+<center> <h1>""</h1><center>
+author: "Tim Jones"
+date: "11 August 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+This project will investigate machine learning methods for predicting the whether exercises have been completed in the correct form using data obtained from activity monitoring devices such as the Jawbone UP and Fitbit. 
+
+The provided training data will be imported, tidied up and used to train several predictive models which will use techniques such as Trees, Random Forests and boosting.
+
+
+## Methodology
+
+### Initiate packages required and set seed
+```{r message=FALSE}
+###packages required
+library("dplyr")
+library("caret")
+
+###set repeatable seed
+set.seed(8182)
+```
+
+## Load data from file, set data partition to create test and training sets
+```{r}
+Fdata<-read.csv("pml-training.csv",stringsAsFactors = F, na.strings = c("","N/A"))
+### 75% training 25% test
+inTrain<-createDataPartition(Fdata$classe,p=0.75)[[1]]
+TrainPredictors<-Fdata[inTrain,-160]
+TrainOutcome<-Fdata[inTrain,160]
+TestPredictors<-Fdata[-inTrain,-160]
+TestOutcome<-Fdata[-inTrain,160]
+
+### impute values into the NA ones from aggregate window summaries.
+
+incNA<-sapply(Fdata,function(x) any(which(is.na(x),arr.ind = TRUE)))
+naCols<-colnames(Fdata)[incNA]
+imputedFValues<-Fdata[Fdata$new_window=="yes",names(Fdata) %in% naCols]
+
+compValues<-Fdata[,!names(Fdata) %in% naCols]
+
+merge
+
+###inlcude only window results & include only columns that do not contain #DIV/0!
+TrainPredictors<-TrainPredictors[,-5]
+trainCol<-sapply(X = TrainPredictors,FUN=function(x) !any(which(x=="#DIV/0!")))
+TrainPredictors<-TrainPredictors[TrainPredictors$new_window=="yes",names(trainCol[trainCol==T])]
+
+
+### set String variables to Factors & remove data variable
+TrainPredictors$user_name<-as.factor(TrainPredictors$user_name)
+TrainPredictors$new_window<-as.factor(TrainPredictors$new_window)
+```
+
+```{r cache=T}
+### train Random Forest Model
+ModelRF<-caret::train(TrainPredictors,Fdata[TrainPredictors$X,"classe"],method = "rf")
+
+###prepare test data in similar manner to training data
+
+TestPredictors<-TestPredictors[,-5]
+testCol<-sapply(X = TestPredictors,FUN=function(x) !any(which(x=="#DIV/0!")))
+TestPredictors<-TestPredictors[TestPredictors$new_window=="yes",names(testCol[testCol==T])]
+TestPredictors$user_name<-as.factor(TestPredictors$user_name)
+TestPredictors$new_window<-as.factor(TestPredictors$new_window)
+```
+
+use modelRF to make predictions on the training data and drw a confusion matrix 
+```{r}
+trainval1<-predict(ModelRF,TrainPredictors)
+confusionMatrix(as.factor(Fdata[TrainPredictors$X,"classe"]),trainval1)
+```
+
+use cross validation data to provide an out of sample prediction
+```{r}
+cval1<-predict(ModelRF,TestPredictors)
+conMat1<-confusionMatrix(as.factor(Fdata[TestPredictors$X,"classe"]),cval1)
+
+```
+
+
+ModelTree<-caret::train(TrainPredictors,Fdata[TrainPredictors$X,"classe"],method = "rpart")
+
+trainval2<-predict(ModelGBM,TrainPredictors)
+cval2<-predict(ModelGBM,TestPredictors)
+confusionMatrix(as.factor(Fdata[TrainPredictors$X,"classe"]),trainval2)
+confusionMatrix(as.factor(Fdata[TestPredictors$X,"classe"]),cval2)
+
+```
+
+#Appendices
+
+Out of bag error rates on the Random Forest cross validation models
+
+```{r echo = False}
+plot(ModelRF$finalModel)
+
+```
+
+
