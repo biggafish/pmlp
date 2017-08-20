@@ -97,7 +97,7 @@ TestPredictors$user_name<-as.factor(TestPredictors$user_name)
 TestPredictors$new_window<-as.factor(TestPredictors$new_window)
 ```
 
-use cross validation data to provide an out of sample prediction, 100% accuracy on cross validation samples
+use cross validation data to provide an out of sample prediction, 100% accuracy on cross validation samples. 0% out of sample error!
 
 ```{r}
 cval1<-predict(ModelRF,TestPredictors)
